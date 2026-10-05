@@ -33,3 +33,36 @@ navLinks.querySelectorAll('a').forEach((link) => {
     navToggle.classList.remove('active');
   });
 });
+
+// Floating device: tilt toward the cursor (desktop pointers only)
+(() => {
+  const stages = document.querySelectorAll('.device-stage');
+  if (!stages.length) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  let frame = 0;
+  const clamp = (v) => Math.max(-1, Math.min(1, v));
+  window.addEventListener('pointermove', (e) => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => {
+      stages.forEach((stage) => {
+        const r = stage.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > window.innerHeight) return;
+        const nx = clamp((e.clientX - (r.left + r.width / 2)) / (window.innerWidth / 2));
+        const ny = clamp((e.clientY - (r.top + r.height / 2)) / (window.innerHeight / 2));
+        const tilt = stage.querySelector('.device-tilt');
+        tilt.style.setProperty('--ry', (nx * 16).toFixed(2) + 'deg');
+        tilt.style.setProperty('--rx', (-ny * 10).toFixed(2) + 'deg');
+      });
+    });
+  }, { passive: true });
+
+  document.addEventListener('pointerleave', () => {
+    stages.forEach((s) => {
+      const tilt = s.querySelector('.device-tilt');
+      tilt.style.setProperty('--ry', '0deg');
+      tilt.style.setProperty('--rx', '0deg');
+    });
+  });
+})();
